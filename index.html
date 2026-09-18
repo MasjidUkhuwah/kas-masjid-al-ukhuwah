@@ -327,6 +327,7 @@
     font-size:17px; line-height:1; padding:4px; border-radius:8px; transition:color .15s, background .15s;
   }
   .del-btn:hover{ color:var(--rust); background:var(--rust-soft); }
+  .del-btn:disabled{ opacity:0.5; cursor:not-allowed; }
 
   .logged-bar{
     display:flex; justify-content:space-between; align-items:center;
@@ -739,11 +740,17 @@ async function addInformasi(){
 
 async function deleteInformasi(id){
   if(!confirm("Hapus informasi ini?")) return;
+  const idx = informasiData.findIndex(d => d.id === id);
+  const backup = idx > -1 ? informasiData[idx] : null;
+  if(idx > -1){
+    informasiData.splice(idx, 1);
+    renderInfoPublik();
+    renderInfoAdmin();
+  }
   try{
     await callApi("deleteInformasi", {}, "POST", { pin: currentPin, id });
-    await loadInformasi();
-    renderInfoAdmin();
   } catch(err){
+    if(backup){ informasiData.splice(idx, 0, backup); renderInfoPublik(); renderInfoAdmin(); }
     alert("Gagal menghapus informasi: " + err.message);
   }
 }
@@ -896,11 +903,17 @@ async function addTransaksi(){
 
 async function deleteTransaksi(id){
   if(!confirm("Hapus transaksi ini?")) return;
+  const idx = adminTransaksi.findIndex(t => t.id === id);
+  const backup = idx > -1 ? adminTransaksi[idx] : null;
+  if(idx > -1){
+    adminTransaksi.splice(idx, 1);
+    renderAdmin();
+  }
   try{
     await callApi("deleteTransaksi", {}, "POST", { pin: currentPin, id });
-    await refreshAdmin();
-    await loadPublicData();
+    loadPublicData(); // sinkron saldo publik di belakang, tidak perlu ditunggu
   } catch(err){
+    if(backup){ adminTransaksi.splice(idx, 0, backup); renderAdmin(); }
     alert("Gagal menghapus transaksi: " + err.message);
   }
 }
