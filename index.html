@@ -302,6 +302,7 @@
   }
   button.btn:hover{ box-shadow:var(--shadow-md); }
   button.btn:active{ transform:scale(0.98); }
+  button.btn:disabled{ opacity:0.65; cursor:not-allowed; transform:none; }
 
   /* ---- Admin form ---- */
   .form-card{
@@ -479,7 +480,7 @@
       <h2>Panel Pengurus</h2>
       <p>Masukkan PIN DKM untuk mengelola transaksi</p>
       <input type="password" id="pinInput" maxlength="4" placeholder="••••">
-      <button class="btn" onclick="tryLogin()">Masuk</button>
+      <button class="btn" id="loginBtn" onclick="tryLogin()">Masuk</button>
       <p class="gate-hint">Hubungi bendahara DKM untuk PIN akses</p>
     </div>
 
@@ -516,7 +517,7 @@
           <input type="text" id="f-ket" placeholder="Catatan singkat, mis. Kotak amal Jumat minggu ke-3">
         </div>
         <div class="form-actions">
-          <button class="btn" style="width:auto;" onclick="addTransaksi()">Simpan Transaksi</button>
+          <button class="btn" style="width:auto;" onclick="addTransaksi()" id="tx-submit-btn">Simpan Transaksi</button>
         </div>
       </div>
 
@@ -876,6 +877,9 @@ async function addTransaksi(){
     alert("Isi tanggal dan nominal dengan benar.");
     return;
   }
+  const btn = document.getElementById("tx-submit-btn");
+  btn.disabled = true;
+  btn.textContent = "Menyimpan…";
   try{
     await callApi("addTransaksi", {}, "POST", { pin: currentPin, tgl, jenis, kat, ket: ket || "-", nominal });
     document.getElementById("f-nominal").value = "";
@@ -884,6 +888,9 @@ async function addTransaksi(){
     await loadPublicData();
   } catch(err){
     alert("Gagal menyimpan transaksi: " + err.message);
+  } finally {
+    btn.disabled = false;
+    btn.textContent = "Simpan Transaksi";
   }
 }
 
@@ -909,6 +916,9 @@ async function refreshAdmin(){
 
 async function tryLogin(){
   const pin = document.getElementById("pinInput").value;
+  const btn = document.getElementById("loginBtn");
+  btn.disabled = true;
+  btn.textContent = "Menghubungkan…";
   try{
     currentPin = pin;
     await refreshAdmin();
@@ -917,6 +927,9 @@ async function tryLogin(){
   } catch(err){
     currentPin = null;
     alert("PIN salah atau gagal terhubung: " + err.message);
+  } finally {
+    btn.disabled = false;
+    btn.textContent = "Masuk";
   }
 }
 function logout(){
